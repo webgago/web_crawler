@@ -1,3 +1,3 @@
 module WebCrawler
-  # Your code goes here...
+  autoload :Request, 'web_crawler/request'
 end
