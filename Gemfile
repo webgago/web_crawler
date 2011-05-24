@@ -1,6 +1,11 @@
-source "http://rubygems.org"
+source :gemcutter
 
 # Specify your gem's dependencies in web_crawler.gemspec
 gemspec
 
-gem 'capistrano'
+group :development, :test do
+  gem "rspec", ">=2.6"
+  gem "autotest"
+  gem "autotest-growl"
+  gem "fakeweb"
+end

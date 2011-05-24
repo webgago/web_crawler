@@ -17,35 +17,23 @@ module WebCrawler
     end
 
     desc "get <URL...>", "Get pages from passed urls"
-    method_option :save, type: :boolean
-    method_option :dir, type: :string
-
+    method_option :parser, type: :array, desc: "first item is a parser class, second item is a path to parser file"
     def get(url, *urls)
-      check_options!(options, 'save' => 'dir')
       urls.unshift url
 
-      req = WebCrawler::Request.new *urls
-      if options['save']
-        puts req.response.inspect
-        req.response.each do |(uri, res)|
-          save uri, res, options
-        end
+      batch = WebCrawler::BatchRequest.new(*urls, handler: options['parser'].first)
+      result = batch.process
+
+      say "Start fetching for urls: #{urls.join(', ')}"
+      puts batch.response.inspect
+
+      if options['parser']
+        require options['parser'][1] if options['parser'][1]
+        print_table result.first, colwidth: 350
+        print_table [["Links size", result.first.size]], colwidth: 350
       end
-    end
 
-    protected
 
-    def save(url, res, options)
-      path = Pathname.new options['dir']
-      path.mkpath
-      path = path.join(url.gsub(/[^\w]/, '_'))
-      path.open('w+') { |f| f.write res.body }
-    end
-
-    def check_options!(options, rules)
-      rules.each do |if_opt, then_opt|
-        raise Thor::RequiredArgumentMissingError unless (options[if_opt] && options[then_opt])
-      end
     end
 
   end

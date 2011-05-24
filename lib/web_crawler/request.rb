@@ -1,59 +1,56 @@
-require "net/http"
-require "net/https"
-require 'uri'
-
 module WebCrawler
 
   class Request
 
     HEADERS = {
-        "User-Agent" =>  "Mozilla/5.0 (X11; U; Linux i686; ru; rv:1.9.2.13) Gecko/20101206 Ubuntu/10.04 (lucid) Firefox/4.01",
-        "Accept" =>  "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language" =>  "ru,en-us;q=0.7,en;q=0.3",
-        "Accept-Charset" =>  "utf-8;q=0.7,*;q=0.7"
+        'User-Agent'      => 'Mozilla/5.0 (X11; Linux x86_64; rv:2.0.1) Gecko/20100101 Firefox/4.0.1',
+        'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language' => 'en-us,en;q=0.5',
+        'Accept-Charset'  => 'utf-8;windows-1251;q=0.7,*;q=0.7',
+        'Cache-Control'   => 'max-age=0'
     }
 
-    attr_reader :urls
+    attr_reader :url, :response
 
-    def initialize(*urls)
-      @urls = normalize_urls(urls)
+    def initialize(url)
+      @url, @request = normalize_url(url), {}
+      @headers = HEADERS.dup
     end
 
-    def response
-      @response ||= exec
+    def process
+      @response = Response.new *fetch(url)
+    end
+
+    def inspect
+      "#<#{self.class}:#{self.object_id} @url=\"#{@url.to_s}\">"
     end
 
     protected
 
-    def normalize_urls(urls)
-      urls.map do |url|
-        url.index("http") == 0 ? url : "http://" + url
-      end
+    def request_for(host, port=nil)
+      @request[[host, port]] =  Net::HTTP.new(host, port)#.tap { |http| http.set_debug_output(STDERR) }
     end
 
-    def exec
-      @urls.map do |url|
-        [url, fetch(url)]
-      end
+    def normalize_url(url)
+     URI.parse url.index("http") == 0 ? url : "http://" + url
     end
 
-    def fetch(url, limit = 3)
+    def fetch(uri, limit = 3)
       raise ArgumentError, 'HTTP redirect too deep' if limit <= 0
-      url = URI.parse(url)
-      response = Net::HTTP.start(url.host, url.port) {|http| http.get('/index.html', headers) }
+      response = request_for(uri.host, uri.port).start { |http| http.get(uri.request_uri, headers) }
       case response
-        when Net::HTTPSuccess then
-          response
         when Net::HTTPRedirection then
-          fetch(response['location'], limit - 1)
+          @headers['Cookie'] = response['Set-Cookie'] if response['Set-Cookie']
+          fetch(normalize_url(response['location']), limit - 1)
         else
-          response.error!
+          [uri, response]
       end
     end
 
     def headers
-      HEADERS
+      @headers
     end
+
 
   end
 

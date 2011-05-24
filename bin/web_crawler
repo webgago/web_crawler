@@ -6,5 +6,8 @@ $:.unshift File.expand_path("../../lib", __FILE__)
 require 'web_crawler'
 require 'web_crawler/cli'
 
-WebCrawler::CLI.start
+begin
+  WebCrawler::CLI.start
+end
+
 

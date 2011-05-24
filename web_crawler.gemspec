@@ -19,11 +19,13 @@ Gem::Specification.new do |s|
   s.executables   = `git ls-files -- bin/*`.split("\n").map { |f| File.basename(f) }
   s.require_paths = ["lib"]
 
-  s.has_rdoc     = false
+  s.has_rdoc = false
 
   s.bindir = "bin"
   s.executables << "web_crawler"
 
   s.add_dependency 'thor'
 
+  s.add_development_dependency(%q<rspec>, [">=2.6"])
+  s.add_development_dependency(%q<fakeweb>)
 end
