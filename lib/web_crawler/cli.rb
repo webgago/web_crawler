@@ -16,24 +16,38 @@ module WebCrawler
       end
     end
 
+    desc "test", "Test task"
+
+    def test
+    end
+
     desc "get <URL...>", "Get pages from passed urls"
     method_option :parser, type: :array, desc: "first item is a parser class, second item is a path to parser file"
+    method_option :cached, type: :boolean, desc: "use cached requests"
     def get(url, *urls)
       urls.unshift url
 
-      batch = WebCrawler::BatchRequest.new(*urls, handler: options['parser'].first)
+      batch  = WebCrawler::BatchRequest.new(*urls, normalize_options(options))
       result = batch.process
 
-      say "Start fetching for urls: #{urls.join(', ')}"
-      puts batch.response.inspect
+      puts result.inspect
+#      say "Start fetching for urls: #{urls.join(', ')}"
+#      puts batch.response.inspect
+#
+#      if options['parser']
+#        require options['parser'][1] if options['parser'][1]
+#        print_table result.first, colwidth: 350
+#        print_table [["Links size", result.first.size]], colwidth: 350
+#      end
 
-      if options['parser']
-        require options['parser'][1] if options['parser'][1]
-        print_table result.first, colwidth: 350
-        print_table [["Links size", result.first.size]], colwidth: 350
-      end
 
+    end
 
+    protected
+
+    def normalize_options(options)
+      options = Hash[options.keys.zip(options.values)]
+      options.symbolize_keys
     end
 
   end

@@ -7,8 +7,9 @@ module WebCrawler
     include Enumerable
 
     def initialize(*urls)
-      options = urls.last.is_a?(Hash) ? urls.pop : { }
-      set_handler(options[:handler]) if options[:handler]
+      @options = urls.last.is_a?(Hash) ? urls.pop : { }
+      set_handler
+
       @urls, @requests = urls.flatten, []
       init_requests!
     end
@@ -35,16 +36,19 @@ module WebCrawler
 
     protected
 
-    def set_handler(parser)
-      @handler = WebCrawler::Handler.new(parser, self)
+    def set_handler
+      @handler = WebCrawler::Handler.new(@options[:parser], self) if @options[:parser]
     end
 
     def init_requests!
       @requests = @urls.map do |url|
-        Request.new(url)
+        request_class.new(url)
       end
     end
 
+    def request_class
+      @options[:cached] ? CachedRequest : Request
+    end
   end
 
 end

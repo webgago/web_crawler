@@ -32,14 +32,14 @@ describe WebCrawler::BatchRequest do
     subject.process.first.should be_a WebCrawler::Response
   end
 
-  it "should accept :handler option with parser class or object" do
+  it "should accept :parser option with parser class or object" do
     class ::TestParser
       def parse(resp)
         resp.to_s + ' parsed'
       end
     end
-    described_class.new(urls, handler: TestParser.new).process.should == ["Example body parsed",
-                                                                          "Example body1 parsed",
-                                                                          "Example body2 parsed"]
+    described_class.new(urls, parser: TestParser.new).process.should == ["Example body parsed",
+                                                                         "Example body1 parsed",
+                                                                         "Example body2 parsed"]
   end
 end

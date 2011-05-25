@@ -12,7 +12,7 @@ module WebCrawler
     end
 
     def process
-      @target.map do |response|
+      @result ||= @target.map do |response|
         @parser.parse(response)
       end
     end

@@ -7,3 +7,7 @@ require "fake_web"
 #Rspec.configure do |c|
 #  c.mock_with :rspec
 #end
+
+WebCrawler.configure do
+  config.cache_adapter = WebCrawler::CacheAdapter::Memory.new
+end
