@@ -3,7 +3,8 @@ module WebCrawler
   class BatchRequest
 
     attr_reader :urls, :responses, :requests
-
+    attr_writer :requests
+    
     include Enumerable
 
     def initialize(*urls)
@@ -30,20 +31,26 @@ module WebCrawler
       end
     end
 
+    def responses=(value)
+      @responses += value.flatten
+    end
+
     def response
       responses.first
+    end
+
+    def build_request(url)
+      request_class.new(url)
     end
 
     protected
 
     def set_handler
-      @handler = WebCrawler::Handler.new(@options[:parser], self) if @options[:parser]
+      @handler = WebCrawler::HandlerParser.new(@options[:parser], self) if @options[:parser]
     end
 
     def init_requests!
-      @requests = @urls.map do |url|
-        request_class.new(url)
-      end
+      @requests = @urls.map { |url| build_request(url) }
     end
 
     def request_class

@@ -2,8 +2,8 @@ module WebCrawler
 
   class Handler
 
-    def initialize(parser, *responses_or_request)
-      @parser = load_parser(parser)
+    def initialize(*responses_or_request, &handler)
+      @handler = handler
       if responses_or_request.first.is_a?(BatchRequest)
         @target = responses_or_request.first
       else
@@ -13,8 +13,16 @@ module WebCrawler
 
     def process
       @result ||= @target.map do |response|
-        @parser.parse(response)
+        @handler.call(response, @target)
       end
+    end
+
+  end
+
+  class HandlerParser < Handler
+    def initialize(parser, *responses_or_request)
+      @parser = load_parser(parser)
+      super(*responses_or_request, &lambda { |response,*| @parser.parse(response) })
     end
 
     protected
@@ -28,19 +36,10 @@ module WebCrawler
       end
     rescue NameError
       $:.unshift File.expand_path('./')
-      require underscore(parser)
+      require WebCrawler.underscore(parser)
       retry
     end
 
-    def underscore(camel_cased_word)
-      word = camel_cased_word.to_s.dup
-      word.gsub!(/::/, '/')
-      word.gsub!(/([A-Z]+)([A-Z][a-z])/, '\1_\2')
-      word.gsub!(/([a-z\d])([A-Z])/, '\1_\2')
-      word.tr!("-", "_")
-      word.downcase!
-      word
-    end
-  end
 
+  end
 end

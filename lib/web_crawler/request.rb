@@ -32,7 +32,7 @@ module WebCrawler
     end
 
     def normalize_url(url)
-     URI.parse url.index("http") == 0 ? url : "http://" + url
+     URI.parse(url.index("http") == 0 ? url : "http://" + url)
     end
 
     def fetch(uri, limit = 3, redirected_from = nil)

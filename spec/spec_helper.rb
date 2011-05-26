@@ -4,10 +4,14 @@ require 'rspec'
 require "web_crawler"
 require "fake_web"
 
-#Rspec.configure do |c|
-#  c.mock_with :rspec
-#end
+require 'fake_web_generator'
+
+RSpec.configure do |c|
+  c.mock_with :rspec
+  c.include FakeWebGenerator
+end
 
 WebCrawler.configure do
   config.cache_adapter = WebCrawler::CacheAdapter::Memory.new
 end
+

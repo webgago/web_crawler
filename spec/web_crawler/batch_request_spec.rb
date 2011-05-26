@@ -40,6 +40,6 @@ describe WebCrawler::BatchRequest do
     end
     described_class.new(urls, parser: TestParser.new).process.should == ["Example body parsed",
                                                                          "Example body1 parsed",
-                                                                         "Example body2 parsed"]
+                                                                         "Example body for url http://example.com/2 parsed"]
   end
 end
