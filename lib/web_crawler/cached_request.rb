@@ -13,7 +13,7 @@ module WebCrawler
 
     def process
       cached do
-        super
+        Response.new *fetch(url), true
       end
     end
 
