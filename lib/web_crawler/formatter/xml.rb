@@ -1,6 +1,6 @@
 module WebCrawler::Formatter
-  class XML < Base
-    def process
+  class Xml < Base
+    def draw
       @options[:headers] ||= input.max_by(&:size).each_with_index.map{|_, index| "field_#{index+1}"}
       "<responses>#{pretty}#{super}</responses>"
     end

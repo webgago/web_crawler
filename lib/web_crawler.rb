@@ -4,6 +4,7 @@ require 'uri'
 require 'forwardable'
 
 require "ext/hash"
+require "ext/array"
 
 module WebCrawler
   autoload :Request, 'web_crawler/request'

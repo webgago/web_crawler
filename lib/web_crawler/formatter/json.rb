@@ -1,8 +1,8 @@
 require 'json'
 
 module WebCrawler::Formatter
-  class JSON < Base
-    def process
+  class Json < Base
+    def draw
       {responses: input}.to_json
     end
   end

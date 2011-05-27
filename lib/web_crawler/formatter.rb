@@ -1,8 +1,14 @@
 module WebCrawler::Formatter
 
-  autoload :CSV, 'web_crawler/formatter/csv'
-  autoload :JSON, 'web_crawler/formatter/json'
-  autoload :XML, 'web_crawler/formatter/xml'
+  autoload :Csv, 'web_crawler/formatter/csv'
+  autoload :Json, 'web_crawler/formatter/json'
+  autoload :Xml, 'web_crawler/formatter/xml'
+
+  extend self
+
+  def factory(type, *args, &block)
+    const_get(WebCrawler::Utility.camelize(type).to_sym).new(*args, &block)
+  end
 
   class Base
     attr_reader :input
@@ -12,7 +18,7 @@ module WebCrawler::Formatter
       @input   = input
     end
 
-    def process
+    def draw
       input.map { |i| format(i) }.join
     end
 

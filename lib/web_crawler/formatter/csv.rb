@@ -1,8 +1,10 @@
 require 'csv'
 
 module WebCrawler::Formatter
-  class CSV < Base
+  class Csv < Base
     def initialize(input, options = { })
+      in_group_of_num = options.delete(:in_group_of)
+      input = input.first.in_groups_of(in_group_of_num) if in_group_of_num && input.size == 1
       headers = options.delete(:headers) || input.select { |i| i.is_a? Hash }.max_by(&:size).keys
     rescue NoMethodError
     ensure

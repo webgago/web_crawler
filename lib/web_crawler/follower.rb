@@ -5,8 +5,8 @@ class WebCrawler::Follower
     @responses = responses.flatten
   end
 
-  def process
-    WebCrawler::BatchRequest.new(collect).process
+  def process(options = {})
+    WebCrawler::BatchRequest.new(collect, options).process
   end
 
   def follow(response)

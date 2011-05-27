@@ -11,7 +11,7 @@ module WebCrawler::CacheAdapter
     end
 
     def put response
-      response.tap { write(response) }
+      response.tap { write(super) }
     end
 
     def get uri

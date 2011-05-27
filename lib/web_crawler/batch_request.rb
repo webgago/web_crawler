@@ -17,9 +17,11 @@ module WebCrawler
 
     def process
       if @handler
-        @handler.process
+        block_given? ? yield(@handler.process) : @handler.process
       else
-        @responses ||= requests.map &:process
+        @responses ||= requests.map do |req|
+          block_given? ? yield(req.process) : req.process
+        end
       end
     end
 

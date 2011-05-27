@@ -9,8 +9,13 @@ class WebCrawler::CacheAdapter::Base
     Time.now - (seconds || WebCrawler.config.cache.expire_within)
   end
 
+  def prepare_response(response)
+    response.set_cached_flag
+    response
+  end
+
   def put response
-    raise NotImplementedError
+    prepare_response(response.dup)
   end
 
   def set response

@@ -36,14 +36,14 @@ module WebCrawler
     end
 
     def fetch(uri, limit = 3, redirected_from = nil)
-      raise ArgumentError, 'HTTP redirect too deep' if limit <= 0
+      raise ArgumentError, "HTTP redirect too deep. #{redirected_from} => #{uri}" if limit <= 0
       response = request_for(uri.host, uri.port).get(uri.request_uri, headers)
       case response
         when Net::HTTPRedirection then
           @headers['Cookie'] = response['Set-Cookie'] if response['Set-Cookie']
-          fetch(normalize_url(response['location']), limit - 1, uri)
+          fetch(normalize_url(response['location']), limit - 1, [*[*redirected_from], uri])
         else
-          [uri, response.extend(ResponseExtension).set_redirected(redirected_from)]
+          [uri, response.extend(ResponseExtension).set_redirected(redirected_from && redirected_from.map(&:to_s))]
       end
     end
 
@@ -54,7 +54,7 @@ module WebCrawler
     module ResponseExtension
 
       def set_redirected(value)
-        @redirected = value
+        @redirected = [*value].size > 1 ? value : [*value].first
         self
       end
 

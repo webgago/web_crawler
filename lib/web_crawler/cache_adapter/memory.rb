@@ -8,9 +8,9 @@ module WebCrawler::CacheAdapter
     self.cache = {}
     
     def put response
-      response.tap { self.class.cache[response.url.to_s] = response }
+      response.tap { self.class.cache[response.url.to_s] = super }
     end
-    
+
     def get uri
       self.class.cache[uri.to_s]
     end

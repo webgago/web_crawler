@@ -21,6 +21,8 @@ class WebCrawler::Parsers::Url
   def normalize(url)
     if url[/^(:?#{@host.scheme}|https|)\:\/\/#{@host.host}/]
       normalize_host(url)
+    elsif url == '#'
+      nil
     else
       (url[0] == '/' || url[0] == '?' || url[0] == '#') ? join(url).to_s : (@options[:same_host] ? nil : url)
     end

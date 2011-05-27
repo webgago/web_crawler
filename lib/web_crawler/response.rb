@@ -4,14 +4,17 @@ module WebCrawler
 
     delegate [:body, :http_version, :code, :message, :msg, :code_type, :[]] => '@response'
 
-    attr_reader :url, :expire, :date
+    attr_reader :url, :expire, :date, :cached
 
-    def initialize(url, response, cached = false)
+    def initialize(url, response)
       raise ArgumentError, "response must be a Net::HTTPResponse, but #{response.class} given" unless response.is_a? Net::HTTPResponse
       @url, @response = url, response
       @date = Time.parse(self['Date']) rescue Time.now
       @expire ||= Time.parse(self['Expires']) rescue Time.now
-      @cached = cached ? ' CACHED' : ''
+    end
+
+    def set_cached_flag
+      @cached = ' CACHED'
     end
 
     def foul?
@@ -29,11 +32,14 @@ module WebCrawler
     def inspect
       redirected = @response.redirected? ? " redirected from \"" + @response.redirected.to_s + "\"" : ""
       "#<#{self.class}::0x#{self.object_id.to_s(16).rjust(14, '0')}#{@cached} " <<
-          "#{@response.class} #{@response.code} #{@response.message} #{@url}" <<
+          "#{type} #{code} #{message} #{@url}" <<
           "#{redirected}>"
     end
 
     alias :to_s :body
 
+    def type
+      @response.class
+    end
   end
 end
