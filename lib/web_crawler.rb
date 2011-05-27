@@ -21,7 +21,8 @@ module WebCrawler
   autoload :Parsers, 'web_crawler/parsers'
   autoload :Utility, 'web_crawler/utility'
 
-  include Configurable
+  autoload :Formatter, 'web_crawler/formatter'
 
+  include Configurable
   extend Utility
 end

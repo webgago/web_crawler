@@ -24,7 +24,7 @@ module WebCrawler
     desc "get <URL...>", "Get pages from passed urls"
     method_option :parser, type: :array, desc: "first item is a parser class, second item is a path to parser file"
     method_option :cached, type: :boolean, desc: "use cached requests"
-
+    method_option :format, type: :string, desc: "output format [json, xml, csv]"
     def get(url, *urls)
       urls.unshift url
 
