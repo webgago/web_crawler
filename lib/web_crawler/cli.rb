@@ -1,12 +1,45 @@
 require 'thor'
 require 'thor/actions'
 require 'pathname'
+require 'web_crawler/cli/thor_hooks'
+require 'web_crawler/cli/thor_inherited_options'
 
 module WebCrawler
   class CLI < Thor
     include Thor::Actions
+    include Thor::Hooks
+    include Thor::InheritedOptions
 
     default_task :help
+
+    class_option :format, type: :string, desc: "output format [json, xml, csv]", default: 'plain'
+    class_option :json, type: :boolean, desc: "json output format. shortcut for --format json"
+    class_option :xml, type: :boolean, desc: "xml output format. shortcut for --format xml"
+    class_option :csv, type: :boolean, desc: "csv output format. shortcut for --format csv"
+    class_option :table, type: :boolean, desc: "table output format. shortcut for --format table"
+
+    class_option :cached, type: :boolean, desc: "use cached requests. if ./tmp/cache exists use it for cache files"
+    class_option :follow, type: :boolean, desc: "follow to urls on the pages"
+
+    before_action do
+      @options = options.dup
+      @options[:format] = 'json' if options[:json]
+      @options[:format] = 'xml' if options[:xml]
+      @options[:format] = 'csv' if options[:csv]
+      @options[:format] = 'table' if options[:table]
+    end
+
+    after_action do
+      default_options = {
+          'csv' => { col_sep: "\t", in_group_of: 5 },
+          'xml' => { pretty: true }
+      }
+      if @options[:format] == 'table'
+        print_table @response
+      else
+        puts WebCrawler::Formatter.factory(@options[:format], @response, default_options[@options[:format]]).draw
+      end
+    end
 
     def help(task = nil)
       if task
@@ -23,37 +56,41 @@ module WebCrawler
 
     desc "get <URL...>", "Get pages from passed urls"
     method_option :parser, type: :array, desc: "first item is a parser class, second item is a path to parser file"
-    method_option :cached, type: :boolean, desc: "use cached requests"
-
+    method_option 'same-host', type: :boolean, desc: "find urls with same host only"
     def get(url, *urls)
       urls.unshift url
 
-      batch  = BatchRequest.new(*urls, normalize_options(options))
-      result = batch.process
-
-      puts result.inspect
-#      say "Start fetching for urls: #{urls.join(', ')}"
-#      puts batch.response.inspect
-#
-#      if options['parser']
-#        require options['parser'][1] if options['parser'][1]
-#        print_table result.first, colwidth: 350
-#        print_table [["Links size", result.first.size]], colwidth: 350
-#      end
-
-
+      batch = BatchRequest.new(*urls, normalize_options(options))
+      Follower.new(batch.process, same_host: options['same-host']).process(normalize_options(options)).map do |response|
+        [response.url.to_s, response.type.to_s, response.code, response.cached]
+      end
     end
 
-    desc "factory URL_PATTERN [params,...]", "Get pages from passed url pattern and params for generate urls"
-    method_option :cached, type: :boolean, desc: "use cached requests"
+    map 'show-urls' => :show_urls
+    desc "show-urls <URL...>", "Get pages from passed urls"
+    method_option 'same-host', type: :boolean, desc: "find urls with same host only"
+    method_option 'cols', type: :numeric, desc: "output columns size"
+    def show_urls(url, *urls)
+      urls.unshift url
+      batch = BatchRequest.new(*urls, normalize_options(options))
+      Follower.new(batch.process, same_host: options['same-host']).collect.first.in_groups_of(options[:cols], "").map{|g| g << ""}
+    end
+
+    desc "factory URL_PATTERN [params,...]", "Generate urls and run get action"
+    inherited_method_options :get
+    method_option :output, type: :boolean, desc: "show output and exit"
+    method_option :list, type: :boolean, desc: "show output like a list and exit"
+
     def factory(pattern, *params)
       params.map! { |param| eval(param) }
       urls = FactoryUrl.new(pattern, params)
-      puts [urls.factory && urls].inspect
-      batch = BatchRequest.new(urls.factory, normalize_options(options))
-      result = batch.process
-
-      puts [result.size, result].inspect
+      puts options.inspect
+      sep = options[:list] ? "\n" : ' '
+      if options[:output] || options[:list]
+        puts urls.factory.map { |u| u.inspect }.join(sep).gsub('"', "'")
+      else
+        get *urls.factory
+      end
     end
 
     protected
@@ -62,6 +99,7 @@ module WebCrawler
       options = Hash[options.keys.zip(options.values)]
       options.symbolize_keys
     end
+
 
   end
 end
