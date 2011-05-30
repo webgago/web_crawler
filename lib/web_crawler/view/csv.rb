@@ -1,6 +1,6 @@
 require 'csv'
 
-module WebCrawler::Formatter
+module WebCrawler::View
   class Csv < Base
     def initialize(input, options = { })
       in_group_of_num = options.delete(:in_group_of)

@@ -1,6 +1,6 @@
 require 'csv'
 
-module WebCrawler::Formatter
+module WebCrawler::View
   class Plain < Base
     def format(item)
       item

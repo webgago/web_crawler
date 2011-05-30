@@ -20,8 +20,8 @@ class Thor
       # Invoke the given task if the given args.
       def invoke_task(task, *args) #:nodoc:
         self.class.run_hooks :before, self, task
-        @response = super(task, *args)
-        @response.tap do 
+        @task_result = super(task, *args)
+        @task_result.tap do
           self.class.run_hooks :after, self, task
         end
       end
@@ -42,25 +42,41 @@ class Thor
 
       def before_action(*args, &block)
         options = args.last.is_a?(Hash) ? args.pop : { }
-        raise ArgumentError, <<-M.gsub(/^\s+/, '') if options.keys.include?(:only) && options.keys.include?(:except)
-        both ":only" and ":except" given. You should use alone option ":only" or ":except"
-        M
+        check_hooks_options! options
         add_hook :before, args, options, &block
       end
 
       def after_action(*args, &block)
         options = args.last.is_a?(Hash) ? args.pop : { }
+        check_hooks_options! options
         add_hook :after, args, options, &block
+      end
+
+      def render(*args, &block)
+        after_action(*args) do
+          block.call @task_result, @options
+        end
+      end
+
+      def run_hooks(place, instance, task)
+        hooks[place].each { |hook| self.run_hook(instance, task, hook) }
+      end
+
+
+      protected
+
+      def check_hooks_options!(options)
+        raise ArgumentError, <<-M.gsub(/^\s+/, '') if options.keys.include?(:only) && options.keys.include?(:except)
+        both ":only" and ":except" given. You should use alone option ":only" or ":except"
+        M
       end
 
       def add_hook(place, args, options, &block)
         options[:only]   ||= []
         options[:except] ||= []
+        options[:only]   = [*options[:only]]
+        options[:except] = [*options[:except]]
         hooks[place] << { block: block, options: options, args: args }
-      end
-
-      def run_hooks(place, instance, task)
-        hooks[place].each { |hook| self.run_hook(instance, task, hook) }
       end
 
       def run_hook(instance, task, hook)

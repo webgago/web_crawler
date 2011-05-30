@@ -1,8 +1,10 @@
-module WebCrawler::Formatter
+module WebCrawler::View
 
-  autoload :Csv, 'web_crawler/formatter/csv'
-  autoload :Json, 'web_crawler/formatter/json'
-  autoload :Xml, 'web_crawler/formatter/xml'
+  autoload :Csv, 'web_crawler/view/csv'
+  autoload :Json, 'web_crawler/view/json'
+  autoload :Xml, 'web_crawler/view/xml'
+  autoload :Plain, 'web_crawler/view/plain'
+  autoload :Table, 'web_crawler/view/table'
 
   extend self
 
@@ -14,12 +16,16 @@ module WebCrawler::Formatter
     attr_reader :input
 
     def initialize(input, options = { })
-      @options = options
+      @options = options || { }
       @input   = input
     end
 
-    def draw
+    def render
       input.map { |i| format(i) }.join
+    end
+
+    def draw(output=$stdout)
+      output.puts render
     end
 
     def format(item)

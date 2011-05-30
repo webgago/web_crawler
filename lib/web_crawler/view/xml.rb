@@ -1,10 +1,11 @@
-module WebCrawler::Formatter
+module WebCrawler::View
   class Xml < Base
-    def draw
+
+    def render
       @options[:headers] ||= input.max_by(&:size).each_with_index.map{|_, index| "field_#{index+1}"}
       "<responses>#{pretty}#{super}</responses>"
     end
-
+    
     def format(item)
       response_tag item.is_a?(Hash) ? item : Hash[@options[:headers].zip item]
     end

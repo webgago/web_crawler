@@ -3,6 +3,7 @@ require 'thor/actions'
 require 'pathname'
 require 'web_crawler/cli/thor_hooks'
 require 'web_crawler/cli/thor_inherited_options'
+require 'web_crawler/cli/thor_view'
 
 module WebCrawler
   class CLI < Thor
@@ -21,25 +22,23 @@ module WebCrawler
     class_option :cached, type: :boolean, desc: "use cached requests. if ./tmp/cache exists use it for cache files"
     class_option :follow, type: :boolean, desc: "follow to urls on the pages"
 
-    before_action do
+    before_action except: :help do
       @options = options.dup
       @options[:format] = 'json' if options[:json]
       @options[:format] = 'xml' if options[:xml]
       @options[:format] = 'csv' if options[:csv]
       @options[:format] = 'table' if options[:table]
+      @options[:format] = 'plain' if options[:plain]
     end
 
-    after_action do
+    render except: :help do |response, options|
       default_options = {
           'csv' => { col_sep: "\t", in_group_of: 5 },
           'xml' => { pretty: true }
       }
-      if @options[:format] == 'table'
-        print_table @response
-      else
-        puts WebCrawler::Formatter.factory(@options[:format], @response, default_options[@options[:format]]).draw
-      end
+      WebCrawler::View.factory(options[:format], response, default_options[options[:format]]).draw
     end
+
 
     def help(task = nil)
       if task
@@ -57,6 +56,7 @@ module WebCrawler
     desc "get <URL...>", "Get pages from passed urls"
     method_option :parser, type: :array, desc: "first item is a parser class, second item is a path to parser file"
     method_option 'same-host', type: :boolean, desc: "find urls with same host only"
+
     def get(url, *urls)
       urls.unshift url
 
@@ -70,10 +70,12 @@ module WebCrawler
     desc "show-urls <URL...>", "Get pages from passed urls"
     method_option 'same-host', type: :boolean, desc: "find urls with same host only"
     method_option 'cols', type: :numeric, desc: "output columns size"
+
     def show_urls(url, *urls)
       urls.unshift url
       batch = BatchRequest.new(*urls, normalize_options(options))
-      Follower.new(batch.process, same_host: options['same-host']).collect.first.in_groups_of(options[:cols], "").map{|g| g << ""}
+      options[:cols] ||= 1
+      Follower.new(batch.process, same_host: options['same-host']).collect.first.in_groups_of(options[:cols], "")
     end
 
     desc "factory URL_PATTERN [params,...]", "Generate urls and run get action"
