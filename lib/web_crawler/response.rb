@@ -2,7 +2,7 @@ module WebCrawler
   class Response
     extend ::Forwardable
 
-    delegate [:body, :http_version, :code, :message, :msg, :code_type, :[], :redirect_path, :redirect?] => '@response'
+    delegate [:http_version, :code, :message, :msg, :code_type, :[], :redirect_path, :redirect?] => '@response'
 
     attr_reader :url, :expire, :date, :cached
 
@@ -34,6 +34,16 @@ module WebCrawler
       "#<#{self.class}::0x#{self.object_id.to_s(16).rjust(14, '0')}#{@cached} " <<
           "#{type} #{code} #{message} #{@url}" <<
           "#{redirected}>"
+    end
+
+    def body
+      type, encoding = self['Content-Type'].split("=")
+      @body ||= if encoding.upcase == 'UTF-8'
+                  @response.body
+                else
+                  require "iconv" unless defined?(Iconv)
+                  Iconv.iconv('UTF-8', encoding.upcase, @response.body).first
+                end
     end
 
     alias :to_s :body
