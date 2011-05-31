@@ -3,9 +3,23 @@ require "fileutils"
 module WebCrawler::View
   class Runner < Base
 
-    module Space
+    module WorkSpace
       extend self
+      # array of responses
       attr_accessor :responses
+      attr_accessor :results
+
+      def q
+        exit
+      end
+
+      def returning(value)
+        self.results = value  
+      end
+
+      def method_missing(meth, *args, &block)
+        puts "\e[31m\e[1mError: method \"\e[0m\e[31m#{meth}\e[0m\e[31m\e[1m\" is missing\e[0m"
+      end
     end
 
     def render
@@ -13,8 +27,47 @@ module WebCrawler::View
         @options['run'] = File.expand_path @options['run'], FileUtils.pwd
       end
 
-      Space.responses = input.freeze
-      Space.module_eval(File.open(@options['run'], 'r').read)
+      WorkSpace.responses = input.freeze
+      WorkSpace.results   = WorkSpace.module_eval(File.open(@options['run'], 'r').read)
+
+      run_irb WorkSpace if @options['console']
+
+      WorkSpace.results
+    end
+
+    def run_irb work_space
+      require "irb"
+      IRB.init_config nil
+      IRB.instance_exec do
+        @CONF[:BACK_TRACE_LIMIT] = 1
+
+        @CONF[:PROMPT][:SIMPLE] = { :PROMPT_I => "[\e[1m\e[31m%M\e[0m](%n)>> ",
+                                    :PROMPT_N => "[\e[1m\e[31m%M\e[0m](%n)>> ",
+                                    :PROMPT_S => "[\e[1m\e[31m%M\e[0m](%n)*",
+                                    :PROMPT_C => "(%n)?> ",
+                                    :RETURN   => "\e[90m#=> %s\n\e[0m" }
+
+        @CONF[:PROMPT_MODE] = :SIMPLE
+      end
+
+      irb = IRB::Irb.new IRB::WorkSpace.new(work_space)
+
+
+      IRB.instance_exec { @CONF[:IRB_RC].call(irb.context) if @CONF[:IRB_RC] }
+      IRB.instance_exec { @CONF[:MAIN_CONTEXT] = irb.context }
+
+
+      trap("SIGINT") do
+        irb.signal_handle
+      end
+
+      begin
+        catch(:IRB_EXIT) do
+          irb.eval_input
+        end
+      ensure
+        IRB.irb_at_exit
+      end
     end
   end
 end

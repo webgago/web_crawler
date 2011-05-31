@@ -20,6 +20,7 @@ module WebCrawler
     class_option :cached, type: :boolean, desc: "use cached requests. if ./tmp/cache exists use it for cache files"
     class_option :follow, type: :boolean, desc: "follow to urls on the pages"
     class_option :run, type: :string, desc: "run custom script with api access"
+    class_option :console, type: :boolean, desc: "run irb console after execution"
     class_option :log, type: :string, desc: "log file path"
 
     before_action except: :help do
