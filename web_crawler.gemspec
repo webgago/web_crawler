@@ -22,9 +22,8 @@ Gem::Specification.new do |s|
   s.has_rdoc = false
 
   s.bindir = "bin"
-  s.executables << "wcrawler"
 
-  s.add_dependency 'thor'
+  s.add_dependency 'thor', '>=0.14.6'
 
   s.add_development_dependency(%q<rspec>, [">=2.6"])
   s.add_development_dependency(%q<fakeweb>)
