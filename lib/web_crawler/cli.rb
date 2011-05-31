@@ -3,7 +3,6 @@ require 'thor/actions'
 require 'pathname'
 require 'web_crawler/cli/thor_hooks'
 require 'web_crawler/cli/thor_inherited_options'
-require 'web_crawler/cli/thor_view'
 
 module WebCrawler
   class CLI < Thor
@@ -18,9 +17,10 @@ module WebCrawler
     class_option :xml, type: :boolean, desc: "xml output format. shortcut for --format xml"
     class_option :csv, type: :boolean, desc: "csv output format. shortcut for --format csv"
     class_option :table, type: :boolean, desc: "table output format. shortcut for --format table"
-
     class_option :cached, type: :boolean, desc: "use cached requests. if ./tmp/cache exists use it for cache files"
     class_option :follow, type: :boolean, desc: "follow to urls on the pages"
+    class_option :run, type: :string, desc: "run custom script with api access"
+    class_option :log, type: :string, desc: "log file path"
 
     before_action except: :help do
       @options = options.dup
@@ -29,14 +29,30 @@ module WebCrawler
       @options[:format] = 'csv' if options[:csv]
       @options[:format] = 'table' if options[:table]
       @options[:format] = 'plain' if options[:plain]
+
+      @options[:original_format] = @options[:format] if options[:run]
+      @options[:format] = 'runner' if options[:run]
+
+
+      WebCrawler.config.logger = Logger.new(@options['log']) if @options['log']
+      WebCrawler.config.logger.level           = Logger::DEBUG
+      WebCrawler.config.logger.datetime_format = "%d-%m-%Y %H:%M:%S"
+      WebCrawler.config.severity_colors        = { 'DEBUG' => :magenta,
+                                                   'INFO'  => :green,
+                                                   'WARN'  => :blue,
+                                                   'ERROR' => :red,
+                                                   'FATAL' => :red,
+                                                   'ANY'   => :yellow }
+
+      WebCrawler.config.logger.formatter = proc { |severity, datetime, _, msg|
+        color = WebCrawler.config.severity_colors[severity]
+
+        send(color, ("[#{severity}] ").ljust(8)) << "[#{datetime}] " << "pid #{$$} " << "-- #{msg}\n"
+      }
     end
 
     render except: :help do |response, options|
-      default_options = {
-          'csv' => { col_sep: "\t", in_group_of: 5 },
-          'xml' => { pretty: true }
-      }
-      WebCrawler::View.factory(options[:format], response, default_options[options[:format]]).draw
+      WebCrawler::View.factory(options[:format], response, options).draw
     end
 
 
@@ -48,60 +64,59 @@ module WebCrawler
       end
     end
 
-    desc "test", "Test task"
-
-    def test
-    end
-
-    desc "get <URL...>", "Get pages from passed urls"
-    method_option :parser, type: :array, desc: "first item is a parser class, second item is a path to parser file"
-    method_option 'same-host', type: :boolean, desc: "find urls with same host only"
-
-    def get(url, *urls)
-      urls.unshift url
-
-      batch = BatchRequest.new(*urls, normalize_options(options))
-      Follower.new(batch.process, same_host: options['same-host']).process(normalize_options(options)).map do |response|
-        [response.url.to_s, response.type.to_s, response.code, response.cached]
-      end
-    end
-
-    map 'show-urls' => :show_urls
-    desc "show-urls <URL...>", "Get pages from passed urls"
-    method_option 'same-host', type: :boolean, desc: "find urls with same host only"
-    method_option 'cols', type: :numeric, desc: "output columns size"
-
-    def show_urls(url, *urls)
-      urls.unshift url
-      batch = BatchRequest.new(*urls, normalize_options(options))
-      options[:cols] ||= 1
-      Follower.new(batch.process, same_host: options['same-host']).collect.first.in_groups_of(options[:cols], "")
-    end
-
-    desc "factory URL_PATTERN [params,...]", "Generate urls and run get action"
-    inherited_method_options :get
-    method_option :output, type: :boolean, desc: "show output and exit"
-    method_option :list, type: :boolean, desc: "show output like a list and exit"
-
-    def factory(pattern, *params)
-      params.map! { |param| eval(param) }
-      urls = FactoryUrl.new(pattern, params)
-      puts options.inspect
-      sep = options[:list] ? "\n" : ' '
-      if options[:output] || options[:list]
-        puts urls.factory.map { |u| u.inspect }.join(sep).gsub('"', "'")
-      else
-        get *urls.factory
-      end
-    end
-
     protected
 
-    def normalize_options(options)
-      options = Hash[options.keys.zip(options.values)]
-      options.symbolize_keys
+    def color(text, color_code)
+      "#{color_code}#{text}\e[0m"
     end
 
+    def bold(text)
+      color(text, "\e[1m")
+    end
+
+    def white(text)
+      color(text, "\e[37m")
+    end
+
+    def green(text)
+      color(text, "\e[32m")
+    end
+
+    def red(text)
+      color(text, "\e[31m")
+    end
+
+    def magenta(text)
+      color(text, "\e[35m")
+    end
+
+    def yellow(text)
+      color(text, "\e[33m")
+    end
+
+    def blue(text)
+      color(text, "\e[34m")
+    end
+
+    def grey(text)
+      color(text, "\e[90m")
+    end
+
+    def short_padding
+      '  '
+    end
+
+    def long_padding
+      '     '
+    end
+
+    def logger
+      WebCrawler.logger
+    end
+
+    def symbolized_options
+      @symbolized_options ||= Hash[@options.keys.zip(@options.values)].symbolize_keys
+    end
 
   end
 end

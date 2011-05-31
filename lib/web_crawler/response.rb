@@ -2,7 +2,7 @@ module WebCrawler
   class Response
     extend ::Forwardable
 
-    delegate [:body, :http_version, :code, :message, :msg, :code_type, :[]] => '@response'
+    delegate [:body, :http_version, :code, :message, :msg, :code_type, :[], :redirect_path, :redirect?] => '@response'
 
     attr_reader :url, :expire, :date, :cached
 
@@ -30,7 +30,7 @@ module WebCrawler
     end
 
     def inspect
-      redirected = @response.redirected? ? " redirected from \"" + @response.redirected.to_s + "\"" : ""
+      redirected = redirect? ? " redirect path: \"" + redirect_path.join(', ') + "\"" : ""
       "#<#{self.class}::0x#{self.object_id.to_s(16).rjust(14, '0')}#{@cached} " <<
           "#{type} #{code} #{message} #{@url}" <<
           "#{redirected}>"

@@ -29,7 +29,7 @@ class Thor
 
     module ClassMethods
       def hooks
-        @hooks ||= { before: [], after: [] }
+        @@hooks ||= { before: [], after: [] }
       end
 
       def before_hooks

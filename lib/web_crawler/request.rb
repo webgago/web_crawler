@@ -13,7 +13,7 @@ module WebCrawler
     attr_reader :url, :response
 
     def initialize(url)
-      @url, @request = normalize_url(url), {}
+      @url, @request = normalize_url(url), { }
       @headers = HEADERS.dup
     end
 
@@ -28,44 +28,30 @@ module WebCrawler
     protected
 
     def request_for(host, port=nil)
-      @request[[host, port]] =  Net::HTTP.new(host, port)#.tap { |http| http.set_debug_output(STDERR) }
+      @request[[host, port]] = Net::HTTP.new(host, port) #.tap { |http| http.set_debug_output(STDERR) }
     end
 
     def normalize_url(url)
-     URI.parse(url.index("http") == 0 ? url : "http://" + url)
+      URI.parse(url.index("http") == 0 ? url : "http://" + url)
+    rescue URI::Error
+      WebCrawler.logger.debug "#{url} bad URI(is not URI?)"
     end
 
-    def fetch(uri, limit = 3, redirected_from = nil)
+    def fetch(uri, limit = 3, redirect_path = nil)
       raise ArgumentError, "HTTP redirect too deep. #{redirected_from} => #{uri}" if limit <= 0
       response = request_for(uri.host, uri.port).get(uri.request_uri, headers)
       case response
         when Net::HTTPRedirection then
           @headers['Cookie'] = response['Set-Cookie'] if response['Set-Cookie']
-          fetch(normalize_url(response['location']), limit - 1, [*[*redirected_from], uri])
+          fetch(normalize_url(response['location']), limit - 1, [redirect_path, uri])
         else
-          [uri, response.extend(ResponseExtension).set_redirected(redirected_from && redirected_from.map(&:to_s))]
+          response.redirect_path = redirect_path if redirect_path
+          [uri, response]
       end
     end
 
     def headers
       @headers
-    end
-
-    module ResponseExtension
-
-      def set_redirected(value)
-        @redirected = [*value].size > 1 ? value : [*value].first
-        self
-      end
-
-      def redirected
-        @redirected
-      end
-
-      def redirected?
-        !!redirected
-      end
-      
     end
 
   end

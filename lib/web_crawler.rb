@@ -5,6 +5,7 @@ require 'forwardable'
 
 require "ext/hash"
 require "ext/array"
+require "ext/http_response"
 
 module WebCrawler
   autoload :Request, 'web_crawler/request'
@@ -23,7 +24,15 @@ module WebCrawler
   autoload :Utility, 'web_crawler/utility'
 
   autoload :View, 'web_crawler/view'
+  autoload :CLI, 'web_crawler/cli'
+  autoload :Application, 'web_crawler/application'
 
   include Configurable
   extend Utility
+
+  def self.logger
+    config.logger
+  end
+
 end
+

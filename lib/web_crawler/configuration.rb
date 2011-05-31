@@ -1,3 +1,5 @@
+require "logger"
+
 module WebCrawler
   class BaseConfiguration
 
@@ -56,12 +58,12 @@ module WebCrawler
 
     def logger
       @logger ||= Logger.new(STDOUT).tap do |log|
-        log.level = Logger.const_get log_level.to_s.capitalize
+       log.level = Logger.const_get log_level.to_s.upcase
       end
     end
 
     def log_level
-      @log_level ||= :info
+      @log_level ||= :debug
     end
 
   end
@@ -79,6 +81,7 @@ module WebCrawler
       def config
         @config ||= Configuration.new
       end
+
     end
   end
 end

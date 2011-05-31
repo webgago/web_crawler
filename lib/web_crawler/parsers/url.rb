@@ -4,7 +4,7 @@ class WebCrawler::Parsers::Url
 
   def initialize(host, options = { })
     @scheme  = options[:secure] ? 'https' : 'http'
-    @host    = URI.parse(normalize_host(host))
+    @host    = URI.parse(normalize_host(host.to_s))
     @scheme  = @host.scheme
     @options = options
     set_current_page

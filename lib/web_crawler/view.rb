@@ -5,6 +5,7 @@ module WebCrawler::View
   autoload :Xml, 'web_crawler/view/xml'
   autoload :Plain, 'web_crawler/view/plain'
   autoload :Table, 'web_crawler/view/table'
+  autoload :Runner, 'web_crawler/view/runner'
 
   extend self
 
@@ -15,13 +16,20 @@ module WebCrawler::View
   class Base
     attr_reader :input
 
+    class << self
+      attr_accessor :default_options
+      def default_options
+        @default_options ||= { }
+      end
+    end
+
     def initialize(input, options = { })
-      @options = options || { }
+      @options = self.class.default_options.merge (options || { })
       @input   = input
     end
 
     def render
-      input.map { |i| format(i) }.join
+      [*input].map { |i| format(i) }.join
     end
 
     def draw(output=$stdout)
@@ -29,7 +37,7 @@ module WebCrawler::View
     end
 
     def format(item)
-      raise NotImplementedError
+      item
     end
   end
 
