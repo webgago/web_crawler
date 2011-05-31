@@ -4,7 +4,7 @@ require "web_crawler/version"
 
 Gem::Specification.new do |s|
   s.name        = "web_crawler"
-  s.version     = WebCrawler::VERSION
+  s.version     = WebCrawler::VERSION::STRING
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Anton Sozontov"]
   s.email       = ["a.sozontov@gmail.com"]
@@ -22,7 +22,7 @@ Gem::Specification.new do |s|
   s.has_rdoc = false
 
   s.bindir = "bin"
-  s.executables << "web_crawler"
+  s.executables << "wcrawler"
 
   s.add_dependency 'thor'
 
