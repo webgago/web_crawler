@@ -6,6 +6,7 @@ module WebCrawler::View
   autoload :Plain, 'web_crawler/view/plain'
   autoload :Table, 'web_crawler/view/table'
   autoload :Runner, 'web_crawler/view/runner'
+  autoload :Yaml, 'web_crawler/view/yaml'
 
   extend self
 
@@ -18,8 +19,9 @@ module WebCrawler::View
 
     class << self
       attr_accessor :default_options
+
       def default_options
-        @default_options ||= { }
+        @default_options ||= { 'output' => $stdout }
       end
     end
 
@@ -32,12 +34,28 @@ module WebCrawler::View
       [*input].map { |i| format(i) }.join
     end
 
-    def draw(output=$stdout)
-      output.puts render
+    def draw(output=nil)
+      begin
+        present_output(output).puts render
+      ensure
+        output.close if output.respond_to? :close
+      end
     end
 
     def format(item)
       item
+    end
+
+    protected
+
+    def present_output(override=nil)
+      @present_output = if override && override.respond_to?(:puts)
+                          override
+                        elsif @options['output'].is_a?(String)
+                          File.open(@options['output'], 'w+')
+                        elsif @options['output'].respond_to? :puts
+                          @options['output']
+                        end
     end
   end
 

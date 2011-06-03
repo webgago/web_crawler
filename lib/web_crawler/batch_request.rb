@@ -20,6 +20,7 @@ module WebCrawler
         block_given? ? yield(@handler.process) : @handler.process
       else
         @responses ||= requests.map do |req|
+          WebCrawler.logger.info "start request to #{req.url.to_s}"
           block_given? ? yield(req.process) : req.process
         end
       end

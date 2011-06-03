@@ -14,6 +14,7 @@ module WebCrawler
 
     class_option :format, type: :string, desc: "output format [json, xml, csv]", default: 'plain'
     class_option :json, type: :boolean, desc: "json output format. shortcut for --format json"
+    class_option :yaml, type: :boolean, desc: "yaml output format. shortcut for --format yaml"
     class_option :xml, type: :boolean, desc: "xml output format. shortcut for --format xml"
     class_option :csv, type: :boolean, desc: "csv output format. shortcut for --format csv"
     class_option :table, type: :boolean, desc: "table output format. shortcut for --format table"
@@ -22,6 +23,7 @@ module WebCrawler
     class_option :run, type: :string, desc: "run custom script with api access"
     class_option :console, type: :boolean, desc: "run irb console after execution"
     class_option :log, type: :string, desc: "log file path"
+    class_option :output, type: :string, desc: "output file path"
 
     before_action except: :help do
       @options = options.dup
@@ -30,6 +32,7 @@ module WebCrawler
       @options[:format] = 'csv' if options[:csv]
       @options[:format] = 'table' if options[:table]
       @options[:format] = 'plain' if options[:plain]
+      @options[:format] = 'yaml' if options[:yaml]
 
       @options[:original_format] = @options[:format] if options[:run]
       @options[:format] = 'runner' if options[:run]

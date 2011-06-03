@@ -1,5 +1,8 @@
 source :gemcutter
 
+gem 'thor', '>=0.14.6'
+gem 'mime-types', '>=1.16'
+
 # Specify your gem's dependencies in web_crawler.gemspec
 gemspec
 

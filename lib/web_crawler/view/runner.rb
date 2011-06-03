@@ -3,8 +3,7 @@ require "fileutils"
 module WebCrawler::View
   class Runner < Base
 
-    module WorkSpace
-      extend self
+    class WorkSpace
       # array of responses
       attr_accessor :responses
       attr_accessor :results
@@ -27,30 +26,31 @@ module WebCrawler::View
         @options['run'] = File.expand_path @options['run'], FileUtils.pwd
       end
 
-      WorkSpace.responses = input.freeze
-      WorkSpace.results   = WorkSpace.module_eval(File.open(@options['run'], 'r').read)
+      @work_space = WorkSpace.new
+      @work_space.responses = input.freeze
+      @work_space.results   = eval(File.open(@options['run'], 'r').read, @work_space.instance_eval("binding"), @options['run'])
 
-      run_irb WorkSpace if @options['console']
+      load_console! if @options['console']
 
-      WorkSpace.results
+      WebCrawler::View.factory(@options['original_format'], @work_space.results, @options).render
     end
 
-    def run_irb work_space
+    def load_console! 
       require "irb"
       IRB.init_config nil
       IRB.instance_exec do
         @CONF[:BACK_TRACE_LIMIT] = 1
 
-        @CONF[:PROMPT][:SIMPLE] = { :PROMPT_I => "[\e[1m\e[31m%M\e[0m](%n)>> ",
-                                    :PROMPT_N => "[\e[1m\e[31m%M\e[0m](%n)>> ",
-                                    :PROMPT_S => "[\e[1m\e[31m%M\e[0m](%n)*",
+        @CONF[:PROMPT][:SIMPLE] = { :PROMPT_I => "[\e[1m\e[31mWebCrawler::API\e[0m](%n)>> ",
+                                    :PROMPT_N => "[\e[1m\e[31mWebCrawler::API\e[0m](%n)>> ",
+                                    :PROMPT_S => "[\e[1m\e[31mWebCrawler::API\e[0m](%n)*",
                                     :PROMPT_C => "(%n)?> ",
                                     :RETURN   => "\e[90m#=> %s\n\e[0m" }
 
         @CONF[:PROMPT_MODE] = :SIMPLE
       end
 
-      irb = IRB::Irb.new IRB::WorkSpace.new(work_space)
+      irb = IRB::Irb.new IRB::WorkSpace.new(@work_space)
 
 
       IRB.instance_exec { @CONF[:IRB_RC].call(irb.context) if @CONF[:IRB_RC] }

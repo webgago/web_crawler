@@ -1,3 +1,5 @@
+require 'mime/types'
+
 module WebCrawler
   class Response
     extend ::Forwardable
@@ -11,6 +13,14 @@ module WebCrawler
       @url, @response = url, response
       @date = Time.parse(self['Date']) rescue Time.now
       @expire ||= Time.parse(self['Expires']) rescue Time.now
+    end
+
+    [:xml, :html, :json].each do |type|
+      class_eval <<-RUBY, __FILE__, __LINE__ + 1
+        def #{type}?
+          mime_type.sub_type == '#{type}'
+        end
+      RUBY
     end
 
     def set_cached_flag
@@ -36,17 +46,33 @@ module WebCrawler
           "#{redirected}>"
     end
 
+    def mime_type
+      MIME::Types[header['content-type']].first
+    end
+
+    def header
+      @header ||= Hash[@response.to_hash.map(&:flatten)]
+    end
+
     def body
       type, encoding = self['Content-Type'].split("=")
       @body ||= if encoding.upcase == 'UTF-8'
                   @response.body
                 else
-                  require "iconv" unless defined?(Iconv)
-                  Iconv.iconv('UTF-8', encoding.upcase, @response.body).first
+                  encode_body(encoding.upcase)
                 end
     end
 
     alias :to_s :body
+
+    def encode_body(from)
+      require "iconv" unless defined?(Iconv)
+      encoded = Iconv.iconv('UTF-8', from, @response.body).first
+      if xml?
+        encoded = encoded.gsub(/<\?xml version="(.*?)" encoding=".*?"\?>/, "<?xml version=\"1.0\" encoding=\"utf-8\"?>")
+      end
+      encoded
+    end
 
     def type
       @response.class
