@@ -25,6 +25,8 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'thor', '>=0.14.6'
   s.add_dependency 'mime-types', '>=1.16'
+  s.add_dependency 'parallel', '>=0.5.5'
+  s.add_dependency 'activesupport'
 
   s.add_development_dependency(%q<rspec>, [">=2.6"])
   s.add_development_dependency(%q<fakeweb>)
