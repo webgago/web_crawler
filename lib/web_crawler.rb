@@ -6,6 +6,7 @@ require 'forwardable'
 require "ext/hash"
 require "ext/array"
 require "ext/http_response"
+require "active_support/core_ext"
 
 module WebCrawler
   autoload :Request, 'web_crawler/request'
@@ -26,6 +27,7 @@ module WebCrawler
   autoload :View, 'web_crawler/view'
   autoload :CLI, 'web_crawler/cli'
   autoload :Application, 'web_crawler/application'
+  autoload :Base, 'web_crawler/base'
 
   include Configurable
   extend Utility

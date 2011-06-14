@@ -3,8 +3,8 @@ require "logger"
 module WebCrawler
   class BaseConfiguration
 
-    def initialize(options = {})
-      @@options ||= {}
+    def initialize(options = { })
+      @@options ||= { }
       @@options.merge! options
     end
 
@@ -15,7 +15,7 @@ module WebCrawler
     def config
       self
     end
-    
+
     private
 
     def method_missing(name, *args, &blk)
@@ -48,7 +48,7 @@ module WebCrawler
     end
 
     def cache(&block)
-      @cache ||= BaseConfiguration.new expire_within: 60
+      @cache ||= BaseConfiguration.new(expire_within: 60, adapter: self.cache_adapter)
       if block_given?
         @cache.instance_eval(block)
       else
@@ -58,7 +58,7 @@ module WebCrawler
 
     def logger
       @logger ||= Logger.new(STDOUT).tap do |log|
-       log.level = Logger.const_get log_level.to_s.upcase
+        log.level = Logger.const_get log_level.to_s.upcase
       end
     end
 

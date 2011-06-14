@@ -11,7 +11,7 @@ module WebCrawler::View
   extend self
 
   def factory(type, *args, &block)
-    const_get(WebCrawler::Utility.camelize(type).to_sym).new(*args, &block)
+    (self.name + "::" + type.to_s.classify).constantize.new(*args, &block)
   end
 
   class Base

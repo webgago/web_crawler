@@ -7,16 +7,23 @@ describe WebCrawler::Follower do
     responses = WebCrawler::BatchRequest.new(urls_board_path).process
     urls      = WebCrawler::Follower.new(responses).collect
 
-    urls.first.should have(9).urls
-    urls.first.should == known_urls
+    urls.should have(9).urls
+    urls.should == known_urls
   end
 
   it "should collect all the unique url with same host like in responses" do
     responses = WebCrawler::BatchRequest.new(urls_board_path).process
     urls      = WebCrawler::Follower.new(responses, same_host: true).collect
 
-    urls.first.should have(6).urls
-    urls.first.should == known_urls.reject { |u| u =~ /otherhost/ }
+    urls.should have(6).urls
+    urls.should == known_urls.reject { |u| u =~ /otherhost/ }
+  end
+
+  it "should collect all the unique url like a given regexp" do
+    responses = WebCrawler::BatchRequest.new(urls_board_path).process
+    urls      = WebCrawler::Follower.new(responses, only: /\/\d+\.html/).collect
+    urls.should have(2).urls
+    urls.should == known_urls.select { |u| u =~ /\/\d+\.html/ }
   end
 
   it "should process requests for following urls" do

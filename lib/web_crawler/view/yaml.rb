@@ -3,7 +3,7 @@ require 'yaml'
 module WebCrawler::View
   class Yaml < Base
     def render
-      YAML.dump(responses: input)
+      YAML.dump(input)
     end
   end
 end

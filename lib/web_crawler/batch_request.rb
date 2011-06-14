@@ -1,10 +1,15 @@
+require "parallel"
+
 module WebCrawler
 
+  # Usage:
+  #  BatchRequest.new(urls).process #=> array of Responses
+  #
   class BatchRequest
 
     attr_reader :urls, :responses, :requests
     attr_writer :requests
-    
+
     include Enumerable
 
     def initialize(*urls)
@@ -19,10 +24,11 @@ module WebCrawler
       if @handler
         block_given? ? yield(@handler.process) : @handler.process
       else
-        @responses ||= requests.map do |req|
+        ready = requests.select{|r| r.ready? }
+        @responses ||= Parallel.map(requests - ready) do |req|
           WebCrawler.logger.info "start request to #{req.url.to_s}"
           block_given? ? yield(req.process) : req.process
-        end
+        end.compact + ready.map(&:process)
       end
     end
 
@@ -57,7 +63,7 @@ module WebCrawler
     end
 
     def request_class
-      @options[:cached] ? CachedRequest : Request
+      !@options[:no_cached] && WebCrawler.config.cache.adapter.is_a?(WebCrawler::CacheAdapter::Base) ? CachedRequest : Request
     end
   end
 

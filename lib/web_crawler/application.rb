@@ -2,7 +2,35 @@ module WebCrawler
   class Application < CLI
 
     desc "test", "Test task"
+
     def test
+      urls = FactoryUrl.new('http://www.superjob.ru/rabota/554/veb-programmist/?from=$1', [[140]]).factory
+
+      logger.info "start requests with #{urls.join(' ')} in 4 processes"
+
+      targets = BatchRequest.new(urls).process
+
+      logger.info "#{targets.size} targets collected"
+
+      urls = Follower.new(targets, same_host: false).collect { |url| url =~ /vacancy\/\?id=\d+/ }
+
+      logger.info "#{urls.size} urls collected"
+      logger.info "start requests with in 4 processes"
+
+      puts BatchRequest.new(urls).process.inspect
+
+      ""
+    end
+
+    desc "runner CLASS", "Run crawler class"
+    method_option :lib, type: :array, desc: "lib directories"
+    def runner(name)
+      $:.unshift './'
+      Array.wrap(@options[:lib]).each { |l| $:.unshift l }
+      require name.underscore
+
+      klass = name.classify.constantize
+      klass.run allow_format(:json, :yaml)
     end
 
     desc "get <URL...>", "Get pages from passed urls"
@@ -36,8 +64,7 @@ module WebCrawler
     def factory(pattern, *params)
       params.map! { |param| eval(param) }
       urls = FactoryUrl.new(pattern, params)
-      puts options.inspect
-      sep = options[:list] ? "\n" : ' '
+      sep  = options[:list] ? "\n" : ' '
       if options[:output] || options[:list]
         puts urls.factory.map { |u| u.inspect }.join(sep).gsub('"', "'")
       else
@@ -45,5 +72,9 @@ module WebCrawler
       end
     end
 
+    protected
+    def allow_format(*allow)
+      allow.flatten.select { |f| f == @options[:format] }.first
+    end
   end
 end

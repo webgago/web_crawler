@@ -14,7 +14,7 @@ module WebCrawler::View
 
     def format(item)
       values = item.respond_to?(:values) ? item.values : item.to_a
-      values.to_csv(@options)
+      values.to_csv(@options[:csv] || {})
     end
   end
 end

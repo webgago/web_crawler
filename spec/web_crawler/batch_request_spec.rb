@@ -27,19 +27,8 @@ describe WebCrawler::BatchRequest do
   end
 
   it "should process requests" do
-    subject.requests.map { |r| r.should_receive(:process).with(no_args).and_return(responses.first) }
     subject.process.should be_a Array
     subject.process.first.should be_a WebCrawler::Response
   end
 
-  it "should accept :parser option with parser class or object" do
-    class ::TestParser
-      def parse(resp)
-        resp.to_s + ' parsed'
-      end
-    end
-    described_class.new(urls, parser: TestParser.new).process.should == ["Example body parsed",
-                                                                         "Example body1 parsed",
-                                                                         "Example body for url http://example.com/2 parsed"]
-  end
 end

@@ -1,1 +1,22 @@
 Web crawler help you with parse and collect data from the web
+
+#TODO
+
+Base web crawler class for API present
+Its showld work like this:
+
+class MyCrawler < WebCrawler::Base
+
+    target "www.example.com"
+    target "www.example.com/page2"
+    target %[www.example.com/contacts www.example.com/about]
+    target "www.example.com/category_:category/page:page/", :categories => [1,2,3,4], :page => 1..100
+
+    target { call_advanced_logic_for_url_generating }
+
+    logger "path/to/log/file" # or Logger.new(...)
+
+
+    
+
+end

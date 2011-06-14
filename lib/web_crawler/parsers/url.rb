@@ -11,11 +11,9 @@ class WebCrawler::Parsers::Url
   end
 
   def parse(response, &filter)
-    (Hpricot(response.to_s) / "a").map do |a|
-      normalize(a["href"]).tap do |url|
-        url = filter.call(url) if url && filter
-      end
-    end.compact.uniq
+    (Hpricot(response.to_s) / "a").map { |a| normalize(a["href"]) }.compact.uniq.tap do |result|
+      result = result.select(&filter) if block_given?
+    end
   end
 
   def normalize(url)

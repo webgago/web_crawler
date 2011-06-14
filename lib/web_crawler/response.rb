@@ -47,7 +47,7 @@ module WebCrawler
     end
 
     def mime_type
-      MIME::Types[header['content-type']].first
+      MIME::Types[header['content-type'] || "text/html; charset=utf-8"].first
     end
 
     def header
@@ -55,7 +55,7 @@ module WebCrawler
     end
 
     def body
-      type, encoding = self['Content-Type'].split("=")
+      encoding = (self['Content-Type'] || 'text/html; charset=UTF-8').split("=").last
       @body ||= if encoding.upcase == 'UTF-8'
                   @response.body
                 else

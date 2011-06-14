@@ -15,8 +15,8 @@ describe WebCrawler::View::Csv do
   end
 
   it "should render input array to csv string with options" do
-    described_class.new(input, headers: [:title, :url, :author], col_sep: ";").render.should == "title;url;author\n1;2;3\nstring;\"other string\n\"\n"
-    described_class.new(input, headers: [:title, :url, :author], row_sep: "\n\n").render.should == "title,url,author\n\n1,2,3\n\nstring,\"other string\n\"\n\n"
+    described_class.new(input, headers: [:title, :url, :author], csv: {col_sep: ";"}).render.should == "title;url;author\n1;2;3\nstring;\"other string\n\"\n"
+    described_class.new(input, headers: [:title, :url, :author], csv: {row_sep: "\n\n"}).render.should == "title,url,author\n\n1,2,3\n\nstring,\"other string\n\"\n\n"
   end
 
 end
@@ -27,15 +27,15 @@ describe WebCrawler::View::Json do
   let(:input_hash) { [{ :title=>1, :url=>2, :author=>3 }, { :title=>"string", :url=>"other string\n", :author=>nil }] }
 
   it "should render input array to json string" do
-    described_class.new(input, headers: [:title, :url, :author]).render.should == '{"responses":[[1,2,"3"],["string","other string\n"]]}'
+    described_class.new(input, headers: [:title, :url, :author]).render.should == '[[1,2,"3"],["string","other string\n"]]'
   end
 
   it "should render input hash to json string" do
     json = described_class.new(input_hash).render
-    json.should == "{\"responses\":[{\"title\":1,\"url\":2,\"author\":3},{\"title\":\"string\",\"url\":\"other string\\n\",\"author\":null}]}"
-    hash = JSON.parse(json).symbolize_keys
-    hash[:responses].each(&:symbolize_keys!)
-    hash.should == { responses: input_hash }
+    json.should == '[{"title":1,"url":2,"author":3},{"title":"string","url":"other string\n","author":null}]'
+    hash = JSON.parse(json).map &:symbolize_keys
+    hash.each(&:symbolize_keys!)
+    hash.should == input_hash
   end
 end
 
@@ -50,7 +50,7 @@ describe WebCrawler::View::Xml do
         "<response><title>1</title><url>2</url><author>3</author></response>" <<
         "<response><title>string</title><url>other string\n</url><author></author></response>" <<
         "</responses>"
-    described_class.new(input, headers: [:title, :url, :author]).render.should == xml
+    described_class.new(input, headers: [:title, :url, :author], pretty: false).render.should == xml
   end
 
   it "should render input array to pretty xml string" do
@@ -58,7 +58,7 @@ describe WebCrawler::View::Xml do
         "<response><title>1</title><url>2</url><author>3</author></response>\n" <<
         "<response><title>string</title><url>other string\n</url><author></author></response>\n" <<
         "</responses>"
-    described_class.new(input, headers: [:title, :url, :author], pretty: true).render.should == xml
+    described_class.new(input, headers: [:title, :url, :author]).render.should == xml
   end
 
   it "should render input array without :headers to xml string" do
@@ -90,6 +90,6 @@ describe WebCrawler::View do
     output = ""
     io = StringIO.new(output)
     WebCrawler::View.factory('json', [[1, 2, 3]]).draw(io)
-    output.should == "{\"responses\":[[1,2,3]]}\n"
+    output.should == "[[1,2,3]]\n"
   end
 end

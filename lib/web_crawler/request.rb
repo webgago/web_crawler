@@ -12,13 +12,23 @@ module WebCrawler
 
     attr_reader :url, :response
 
-    def initialize(url)
+    def initialize(url, custom_headers = { })
       @url, @request = normalize_url(url), { }
-      @headers = HEADERS.dup
+      @headers = HEADERS.dup.merge(custom_headers)
+      @ready   = false
+    end
+
+    def ready?
+      @ready
     end
 
     def process
       @response = Response.new *fetch(url)
+      @ready    = true
+      response
+    rescue Errno::ECONNREFUSED => e
+      WebCrawler.logger.error "request to #{url} failed: #{e.message}"
+      return nil
     end
 
     def inspect
@@ -39,7 +49,9 @@ module WebCrawler
 
     def fetch(uri, limit = 3, redirect_path = nil)
       raise ArgumentError, "HTTP redirect too deep. #{redirected_from} => #{uri}" if limit <= 0
+
       response = request_for(uri.host, uri.port).get(uri.request_uri, headers)
+
       case response
         when Net::HTTPRedirection then
           @headers['Cookie'] = response['Set-Cookie'] if response['Set-Cookie']

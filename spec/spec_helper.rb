@@ -9,9 +9,14 @@ require 'fake_web_generator'
 RSpec.configure do |c|
   c.mock_with :rspec
   c.include FakeWebGenerator
+
+  c.before(:each) do
+    WebCrawler.configure do
+      config.logger        = nil
+      config.cache_adapter = WebCrawler::CacheAdapter::Memory.new
+      config.logger.level = Logger::ERROR
+    end
+  end
 end
 
-WebCrawler.configure do
-  config.cache_adapter = WebCrawler::CacheAdapter::Memory.new
-end
 
