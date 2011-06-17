@@ -1,22 +1,32 @@
 Web crawler help you with parse and collect data from the web
 
-#TODO
+==How it works.
 
-Base web crawler class for API present
-Its showld work like this:
+class StackoverflowCrawler < WebCrawler::Base
 
-class MyCrawler < WebCrawler::Base
-
-    target "www.example.com"
-    target "www.example.com/page2"
-    target %[www.example.com/contacts www.example.com/about]
-    target "www.example.com/category_:category/page:page/", :categories => [1,2,3,4], :page => 1..100
-
-    target { call_advanced_logic_for_url_generating }
-
+    target "http://stackoverflow.com/questions/tagged/:tag", :tag=> %w{ruby ruby-on-rails ruby-on-rails-3}
     logger "path/to/log/file" # or Logger.new(...)
 
+    cache_to '/tmp/cache/stackoverflow'
 
-    
+    context "#questions .question-summary", :jobs do
 
+      #TODO: defaults :format => lambda{ |v| v.to_i }
+
+      map '.vote-count-post strong', :to => :vote_count, :format => lambda{ |v| v.to_i }
+      map '.views', :to => :view_count, :format => lambda{ |v| v.match(/\d+/)[0].to_i }
+      map '.status strong', :to => :answer_count, :format => lambda{ |v| v.to_i }
+      map '.summary h3 a', :to => :title, :format => lambda{ |v| v.to_i }
+      map '.summary .excerpt', :to => :excerpt, :format => lambda{ |v| v.to_i }
+      map '.user-action-time .relativetime', :to => :posted_at, :on => [:attr, :title]
+      map '.tags .post-tag', :to => :tags, :format => lambda{ |v| v.to_i }
+
+    end
 end
+
+
+#TODO
+ 1. Add documentation
+ 2. ...
+ 3. PROFIT!!!1
+ (:
