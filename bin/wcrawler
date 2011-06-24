@@ -1,5 +1,4 @@
 #!/usr/bin/env ruby
-
 $:.unshift File.expand_path("../../lib", __FILE__)
 
 # Check if an older version of bundler is installed

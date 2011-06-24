@@ -1,6 +1,9 @@
 module WebCrawler
   class Application < CLI
 
+    map '-V' => 'version'
+    map '-v' => 'version'
+    
     desc "test", "Test task"
 
     def test
@@ -70,6 +73,11 @@ module WebCrawler
       else
         get *urls.factory
       end
+    end
+
+    desc '-v or -V or version', 'Show gem version'
+    def version
+      WebCrawler::VERSION::STRING
     end
 
     protected
