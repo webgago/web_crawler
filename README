@@ -2,6 +2,8 @@ Web crawler help you with parse and collect data from the web
 
 ==How it works.
 
+
+```ruby
 class StackoverflowCrawler < WebCrawler::Base
 
     target "http://stackoverflow.com/questions/tagged/:tag", :tag=> %w{ruby ruby-on-rails ruby-on-rails-3}
@@ -23,7 +25,7 @@ class StackoverflowCrawler < WebCrawler::Base
 
     end
 end
-
+```
 
 #TODO
  1. Add documentation
